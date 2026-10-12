@@ -1,0 +1,988 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PlantTwin</title>
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap">
+<style>
+/* Concepto: hoja de datos de instrumentación. Papel neutro, tinta, reglas finas,
+   valores en monoespaciada y matemáticas en serif cursiva. Un solo acento (azul de
+   tinta) para enlaces; el color de las gráficas sigue la paleta categórica validada. */
+:root {
+  --page: #f9f9f7; --surface: #fcfcfb; --sunk: #f3f2ee;
+  --ink: #0b0b0b; --ink2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --line: rgba(11,11,11,.10);
+  --accent: #184f95; --band: rgba(42,120,214,.12);
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --cond: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --math: "STIX Two Text", "Cambria Math", "Times New Roman", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0d0d0d; --surface: #1a1a19; --sunk: #141413;
+    --ink: #f0efec; --ink2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --line: rgba(255,255,255,.10);
+    --accent: #86b6ef; --band: rgba(57,135,229,.18);
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0d0d0d; --surface: #1a1a19; --sunk: #141413;
+  --ink: #f0efec; --ink2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --line: rgba(255,255,255,.10);
+  --accent: #86b6ef; --band: rgba(57,135,229,.18);
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 64px; }
+body { background: var(--page); color: var(--ink); font: 400 16px/1.6 var(--sans); -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+.wrap { max-width: 1040px; margin-inline: auto; padding-inline: 16px; }
+@media (min-width: 720px) { .wrap { padding-inline: 28px; } }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+p { margin: 0 0 1em; max-width: 68ch; }
+h1, h2, h3 { font-family: var(--cond); font-weight: 600; text-wrap: balance; margin: 0; letter-spacing: -.01em; }
+h2 { font-size: clamp(1.7rem, 4vw, 2.3rem); line-height: 1.1; margin-bottom: 16px; }
+h3 { font-size: 1.25rem; line-height: 1.2; margin: 32px 0 10px; }
+ul, ol { max-width: 68ch; padding-left: 1.2em; margin: 0 0 1em; }
+li { margin-bottom: .4em; }
+code { font-family: var(--mono); font-size: .88em; background: var(--sunk); padding: 1px 5px; border-radius: 3px; }
+pre { font: 13px/1.55 var(--mono); background: var(--sunk); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; overflow-x: auto; margin: 12px 0 20px; }
+pre code { background: none; padding: 0; font-size: inherit; }
+small { font-size: .85em; }
+
+/* navegación */
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--page); border-bottom: 1px solid var(--line); }
+.nav .wrap { display: flex; align-items: center; gap: 2px; overflow-x: auto; padding-block: 8px; scrollbar-width: thin; }
+.brand { font: 600 1.15rem var(--cond); color: var(--ink); text-decoration: none; margin-right: 12px; flex: none; }
+.nav a.l { flex: none; font: 500 12px var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--ink2); text-decoration: none; padding: 7px 9px; border-radius: 4px; }
+.nav a.l:hover { background: var(--sunk); color: var(--ink); }
+.nav .sp { flex: 1 0 12px; }
+
+/* cabecera */
+.hero { padding-block: 48px 8px; }
+.kick { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink2); margin: 0 0 14px; max-width: none; }
+h1 { font-size: clamp(3rem, 9vw, 5.2rem); line-height: .95; letter-spacing: -.02em; }
+.lede { font-size: 1.2rem; line-height: 1.5; color: var(--ink2); margin: 20px 0 24px; max-width: 58ch; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 4px; font: 600 14px var(--sans); text-decoration: none; border: 1px solid var(--ink); color: var(--ink); background: transparent; cursor: pointer; }
+.btn.primary { background: var(--ink); color: var(--page); }
+.btn.off { opacity: .55; pointer-events: none; }
+.ds { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); column-gap: 32px; border-top: 2px solid var(--ink); margin-top: 36px; }
+.ds > div { padding: 12px 0 14px; border-bottom: 1px solid var(--line); min-width: 0; }
+.ds .k { display: block; font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink2); margin-bottom: 4px; }
+.ds .v { font-size: .98rem; line-height: 1.5; }
+
+/* secciones */
+section { padding-block: 56px; border-top: 1px solid var(--line); margin-top: 40px; }
+.hero + section, #resumen-fin { margin-top: 40px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; min-width: 0; }
+.note { background: var(--sunk); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; max-width: 68ch; margin: 16px 0; }
+.note p:last-child { margin-bottom: 0; }
+.cols2 { display: grid; gap: 24px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
+.cols2 > * { min-width: 0; }
+.tablewrap { overflow-x: auto; margin: 12px 0 20px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink2); text-align: left; border-bottom: 2px solid var(--ink); padding: 8px 10px; vertical-align: bottom; }
+td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+td.n, th.n { font-family: var(--mono); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.est { font-style: italic; color: var(--ink2); }
+.foot { font-size: .86rem; color: var(--ink2); max-width: 74ch; }
+
+/* matemáticas */
+var, .m { font-family: var(--math); }
+var { font-style: italic; }
+sub { font-size: .72em; line-height: 0; }
+.eq { display: flex; align-items: center; justify-content: space-between; gap: 16px; font-family: var(--math); font-size: 1.2rem; padding: 14px 18px; background: var(--sunk); border: 1px solid var(--line); border-radius: 4px; overflow-x: auto; margin: 14px 0; white-space: nowrap; }
+.eq .tag { font: 11px var(--mono); color: var(--ink2); letter-spacing: .04em; }
+.frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; line-height: 1.3; margin: 0 .2em; }
+.frac > :first-child { border-bottom: 1px solid currentColor; padding: 0 .3em; }
+.frac > :last-child { padding: 0 .3em; }
+.big { display: inline-flex; align-items: center; font-size: 1.5em; line-height: 1; }
+.lim { display: inline-flex; flex-direction: column; justify-content: space-between; font-size: .5em; line-height: 1.1; height: 2.6em; margin-left: .15em; text-align: left; }
+
+/* simulador */
+.sim { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); margin-top: 20px; }
+@media (min-width: 900px) { .sim { grid-template-columns: 290px minmax(0, 1fr); align-items: start; } }
+.ctl { margin: 0 0 14px; }
+.ctl .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 14px; }
+.ctl output { font: 500 14px var(--mono); }
+.ctl input[type=range] { width: 100%; margin: 4px 0 0; accent-color: var(--accent); min-height: 24px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 16px; }
+.chip { font: 500 13px var(--mono); padding: 6px 10px; border: 1px solid var(--axis); background: var(--surface); color: var(--ink); border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--page); border-color: var(--ink); }
+.chip i { width: 12px; height: 12px; border-radius: 2px; background: var(--c); border: 1.5px solid var(--page); outline: 1px solid var(--ink2); display: inline-block; }
+.chk { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; margin: 4px 0 14px; }
+.chk input { margin-top: 4px; accent-color: var(--accent); }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
+.metric { background: var(--surface); padding: 10px 14px 12px; }
+.metric .k { font-size: 12px; color: var(--ink2); }
+.metric .v { font: 500 1.45rem/1.3 var(--mono); font-variant-numeric: tabular-nums; }
+.metric .v small { font-size: .55em; color: var(--ink2); margin-left: 3px; }
+.ctitle { font: 600 13px var(--sans); color: var(--ink2); margin: 12px 0 2px; }
+
+/* gráficas */
+.chart { position: relative; min-width: 0; }
+.chart svg { display: block; width: 100%; height: auto; }
+.ax { fill: var(--muted); font: 11px var(--mono); }
+.ax2 { fill: var(--ink2); font: 11px var(--mono); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--ink2); margin-bottom: 4px; }
+.lg { display: inline-flex; align-items: center; }
+.sw { display: inline-block; width: 18px; height: 0; border-top: 2px solid var(--c); margin-right: 6px; flex: none; }
+.sw.dash { border-top-style: dashed; }
+.sw.fill { height: 10px; border: 0; background: var(--c); opacity: .3; }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--axis); border-radius: 4px; padding: 6px 9px; font: 12px/1.5 var(--mono); box-shadow: 0 2px 10px rgba(0,0,0,.14); white-space: nowrap; z-index: 5; }
+.tip .th { color: var(--ink2); margin-bottom: 2px; }
+.tip b { font-weight: 500; margin-left: 8px; float: right; }
+details { margin: 8px 0 0; }
+summary { cursor: pointer; font-size: 14px; color: var(--accent); padding: 4px 0; }
+
+/* diagramas */
+.dg { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); padding: 12px; margin: 16px 0; }
+.dg svg { display: block; min-width: 640px; width: 100%; height: auto; }
+.dg-box { fill: var(--sunk); stroke: var(--axis); stroke-width: 1; }
+.dg-hot { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+.dg-lane { fill: var(--sunk); stroke: none; }
+.dg-t { fill: var(--ink); font: 600 12px var(--sans); }
+.dg-s { fill: var(--ink2); font: 11px var(--mono); }
+.dg-l { stroke: var(--ink2); stroke-width: 1.5; fill: none; }
+.dg-ah { fill: var(--ink2); }
+.dg-dot { fill: var(--ink2); }
+
+footer { border-top: 2px solid var(--ink); padding-block: 28px 56px; color: var(--ink2); font-size: .9rem; }
+footer p { max-width: 74ch; }
+</style>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#resumen">PlantTwin</a>
+    <a class="l" href="#simulador">Simulador</a>
+    <a class="l" href="#experimento">Experimento</a>
+    <a class="l" href="#teoria">Teoría</a>
+    <a class="l" href="#modelo">Modelo</a>
+    <a class="l" href="#ficha">Ficha técnica</a>
+    <a class="l" href="#validez">Validez</a>
+    <a class="l" href="#aplicaciones">Aplicaciones</a>
+    <a class="l" href="#repositorio">Repositorio</a>
+    <span class="sp"></span>
+    <a class="l" data-blog href="#">← Blog</a>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+<!-- ============ RESUMEN / FICHA EJECUTIVA ============ -->
+<div class="hero" id="resumen">
+  <p class="kick">Caso de estudio 01 · Fundamentos de automatización y control · Octubre de 2026</p>
+  <h1>PlantTwin</h1>
+  <p class="lede">Un laboratorio didáctico para ver qué hace cada parte de un controlador PID cuando regula la temperatura de un proceso simulado. Se puede probar aquí mismo, sin instalar nada.</p>
+  <div class="actions">
+    <a class="btn primary" href="#simulador">Probar el simulador</a>
+    <a class="btn" data-repo href="#">Repositorio en GitHub</a>
+  </div>
+
+  <div class="ds">
+    <div><span class="k">Qué es</span><span class="v">Un simulador web de un sistema térmico con control PID. El cálculo corre en Python (FastAPI) y la interfaz en React.</span></div>
+    <div><span class="k">Pregunta</span><span class="v">¿Qué efecto tiene la ganancia integral <var>K<sub>i</sub></var> sobre la precisión, el sobreimpulso y el tiempo de establecimiento?</span></div>
+    <div><span class="k">Escenario</span><span class="v">Una cámara parte de 25 °C y debe mantenerse en 60 °C. El controlador entrega una potencia entre 0 % y 100 %.</span></div>
+    <div><span class="k">Método</span><span class="v">Se cambia solo <var>K<sub>i</sub></var> (de 0 a 0.5). Quedan fijos <var>K<sub>p</sub></var> = 3, <var>K<sub>d</sub></var> = 0.4, el modelo y los 100 s de simulación.</span></div>
+    <div><span class="k">Resultado</span><span class="v">Sin integral el error queda en 12.5 °C. Con <var>K<sub>i</sub></var> = 0.3 llega a 60 °C en 18.6 s con 0.43 °C de sobreimpulso. Con <var>K<sub>i</sub></var> = 0.5 el sobreimpulso sube a 3.2 °C.</span></div>
+    <div><span class="k">Alcance</span><span class="v">Material de aprendizaje. Sus resultados no sirven para ajustar un equipo real sin identificar y validar antes el proceso.</span></div>
+  </div>
+</div>
+
+<!-- ============ SIMULADOR ============ -->
+<section id="simulador">
+  <p class="kick">Interactivo</p>
+  <h2>Simulador PID en el navegador</h2>
+  <p>Es una versión en JavaScript del modelo documentado y reproduce los resultados registrados en el backend. Mueve las ganancias y mira cómo cambian la temperatura, la potencia y las métricas. Pasa el cursor o el dedo sobre las gráficas para leer valores.</p>
+
+  <div class="sim">
+    <div class="panel">
+      <div class="ctl"><div class="row"><label for="kp"><var>K<sub>p</sub></var> proporcional</label><output id="o-kp">3.0</output></div><input id="kp" type="range" min="0" max="10" step="0.1" value="3"></div>
+      <div class="ctl"><div class="row"><label for="ki"><var>K<sub>i</sub></var> integral</label><output id="o-ki">0.30</output></div><input id="ki" type="range" min="0" max="1" step="0.01" value="0.3"></div>
+      <div class="ctl"><div class="row"><label for="kd"><var>K<sub>d</sub></var> derivativa</label><output id="o-kd">0.40</output></div><input id="kd" type="range" min="0" max="3" step="0.05" value="0.4"></div>
+      <div class="ctl"><div class="row"><label for="sp">Consigna</label><output id="o-sp">60 °C</output></div><input id="sp" type="range" min="40" max="80" step="1" value="60"></div>
+      <div class="ctl"><div class="row"><span>Valores de <var>K<sub>i</sub></var> del experimento</span></div></div>
+      <div class="chips" id="presets" role="group" aria-label="Valores de Ki del experimento"></div>
+      <label class="chk"><input id="aw" type="checkbox"><span>Anti-windup: congelar la integral mientras la salida satura</span></label>
+      <button class="btn" id="reset" type="button">Restablecer</button>
+      <p class="foot" id="ss-note" style="margin-top:14px"></p>
+    </div>
+
+    <div>
+      <div class="metrics" aria-live="polite">
+        <div class="metric"><div class="k">Temperatura máxima</div><div class="v" id="m-tmax">–</div></div>
+        <div class="metric"><div class="k">Sobreimpulso</div><div class="v" id="m-mp">–</div></div>
+        <div class="metric"><div class="k">Error final</div><div class="v" id="m-ef">–</div></div>
+        <div class="metric"><div class="k">Establecimiento</div><div class="v" id="m-ts">–</div></div>
+        <div class="metric"><div class="k">Potencia final</div><div class="v" id="m-uf">–</div></div>
+      </div>
+      <div class="panel">
+        <div class="ctitle">Temperatura (°C)</div>
+        <div id="c-temp"></div>
+        <div class="ctitle">Potencia solicitada (%)</div>
+        <div id="c-pow"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EXPERIMENTO ============ -->
+<section id="experimento">
+  <p class="kick">Datos</p>
+  <h2>El experimento de <var>K<sub>i</sub></var></h2>
+  <p>Cada fila es una corrida de 100 s con <var>K<sub>p</sub></var> = 3, <var>K<sub>d</sub></var> = 0.4, consigna de 60 °C y temperatura inicial de 25 °C. Solo cambia <var>K<sub>i</sub></var>.</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr>
+      <th class="n"><var>K<sub>i</sub></var></th><th class="n">Máximo (°C)</th><th class="n">Sobreimpulso (°C)</th><th class="n">Error final (°C)</th><th class="n">Establecimiento (s)</th><th class="n">Potencia final (%)</th>
+    </tr></thead>
+    <tbody>
+      <tr><td class="n">0.0</td><td class="n">47.50</td><td class="n">0.00</td><td class="n">12.50</td><td class="n">No alcanzado</td><td class="n est">37.50 †</td></tr>
+      <tr><td class="n">0.1</td><td class="n">58.98</td><td class="n">0.00</td><td class="n">1.02</td><td class="n">No alcanzado</td><td class="n">57.11 ‡</td></tr>
+      <tr><td class="n">0.2</td><td class="n">59.97</td><td class="n">0.00</td><td class="n">0.03</td><td class="n">42.4</td><td class="n est">58.32 †</td></tr>
+      <tr><td class="n">0.3</td><td class="n">60.43</td><td class="n">0.43</td><td class="n">0.00</td><td class="n">18.6</td><td class="n est">58.33 †</td></tr>
+      <tr><td class="n est">0.4 †</td><td class="n est">61.72</td><td class="n est">1.72</td><td class="n est">0.00</td><td class="n est">34.4</td><td class="n est">58.33</td></tr>
+      <tr><td class="n">0.5</td><td class="n">63.20</td><td class="n">3.20</td><td class="n">0.00</td><td class="n">32.8</td><td class="n">58.33</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="foot">Las filas 0, 0.1, 0.2, 0.3 y 0.5 son las corridas registradas en el dashboard. † Valor calculado con este mismo modelo, no registrado en el dashboard. ‡ El dashboard registró 57.11 % y el modelo da 57.12 %; la diferencia de 0.01 % se atribuye a redondeo o al manejo del último paso.</p>
+
+  <h3>Las cinco curvas juntas</h3>
+  <div class="panel">
+    <div class="chips" id="cmp-chips" role="group" aria-label="Curvas visibles"></div>
+    <div id="c-cmp"></div>
+  </div>
+
+  <h3>Qué dicen los datos</h3>
+  <ol>
+    <li><strong>Sin integral queda un error permanente.</strong> Con <var>K<sub>i</sub></var> = 0 el sistema se detiene en 47.5 °C. No es casualidad: con solo proporcional, el error de régimen es <span class="m">(<var>r</var> − <var>T</var><sub>amb</sub>) / (1 + <var>G</var>·<var>K<sub>p</sub></var>) = 35 / 2.8 = 12.5 °C</span>.</li>
+    <li><strong>La potencia final es la misma en todas las corridas que llegan a 60 °C.</strong> En régimen permanente el calefactor solo compensa las pérdidas: <span class="m"><var>u</var> = (<var>r</var> − <var>T</var><sub>amb</sub>) / <var>G</var> = 35 / 0.6 = 58.33 %</span>. Por eso el 58.33 % de <var>K<sub>i</sub></var> = 0.3 y 0.5 no necesita registro aparte.</li>
+    <li><strong>Más <var>K<sub>i</sub></var> no siempre acelera el establecimiento.</strong> Los tiempos van 42.4 → 18.6 → 34.4 → 32.8 s para <var>K<sub>i</sub></var> = 0.2, 0.3, 0.4, 0.5. El motivo está en la definición de la métrica, como muestra el barrido siguiente.</li>
+  </ol>
+
+  <h3>Barrido fino de <var>K<sub>i</sub></var> entre 0.20 y 0.50</h3>
+  <div class="cols2">
+    <div class="panel"><div class="ctitle">Sobreimpulso (°C)</div><div id="c-mp"></div></div>
+    <div class="panel"><div class="ctitle">Tiempo de establecimiento (s)</div><div id="c-ts"></div></div>
+  </div>
+  <p id="sweep-note" style="margin-top:16px"></p>
+  <p>El tiempo de establecimiento usa una banda de ±0.7 °C (2 % del salto de 35 °C). Mientras el sobreimpulso cabe dentro de la banda, la curva no "sale" y el tiempo es corto. Al pasar de la banda, hay que esperar el regreso y el tiempo se duplica. Elegir un <var>K<sub>i</sub></var> exige fijar antes el criterio: rapidez, sobreimpulso nulo o un equilibrio entre ambos.</p>
+  <details>
+    <summary>Ver los datos del barrido en tabla</summary>
+    <div class="tablewrap"><table><thead><tr><th class="n"><var>K<sub>i</sub></var></th><th class="n">Sobreimpulso (°C)</th><th class="n">Establecimiento (s)</th></tr></thead><tbody id="sweep-tbl"></tbody></table></div>
+  </details>
+
+  <h3>Anti-windup</h3>
+  <p>El anti-windup por limitación congela la integral mientras la salida está saturada y el error empuja en la misma dirección. Con las ganancias del experimento reduce poco el sobreimpulso. Con <var>K<sub>i</sub></var> alto la diferencia es grande. El sobreimpulso que queda se debe al retraso que la integral añade sobre una planta con inercia, no a la saturación.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th class="n"><var>K<sub>i</sub></var></th><th class="n">Sobreimpulso estándar (°C)</th><th class="n">Con anti-windup (°C)</th><th class="n">Establecimiento estándar (s)</th><th class="n">Con anti-windup (s)</th></tr></thead>
+    <tbody id="aw-tbl"></tbody>
+  </table>
+  </div>
+  <p class="foot">Valores calculados con este modelo. El backend original no incluye anti-windup.</p>
+</section>
+
+<!-- ============ TEORÍA ============ -->
+<section id="teoria">
+  <p class="kick">Teoría</p>
+  <h2>Teoría de control y el controlador PID, en breve</h2>
+
+  <h3>Qué es un sistema de control</h3>
+  <p>Un sistema de control hace que una variable física (temperatura, velocidad, presión, nivel) se comporte como se quiere, aunque cambien las condiciones. Sus elementos básicos son estos:</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Elemento</th><th>Qué es</th><th>En PlantTwin</th></tr></thead>
+    <tbody>
+      <tr><td>Planta (proceso)</td><td>Lo que se controla</td><td>Cámara térmica</td></tr>
+      <tr><td>Variable controlada</td><td>Lo que se mide y se quiere regular</td><td>Temperatura</td></tr>
+      <tr><td>Consigna (<i>setpoint</i>)</td><td>Valor deseado</td><td>60 °C</td></tr>
+      <tr><td>Sensor</td><td>Mide la variable</td><td>Temperatura medida por el modelo</td></tr>
+      <tr><td>Controlador</td><td>Decide qué hacer a partir del error</td><td>PID</td></tr>
+      <tr><td>Actuador</td><td>Ejecuta la decisión, con límites</td><td>Calefactor, 0 a 100 %</td></tr>
+      <tr><td>Perturbación</td><td>Lo que desvía la variable sin que se ordene</td><td>Pérdidas de calor (todavía no hay perturbaciones simuladas)</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Lazo abierto y lazo cerrado</h3>
+  <p>En <strong>lazo abierto</strong> se aplica una acción fija sin mirar el resultado, como un tostador con temporizador. Funciona solo si el proceso es muy predecible. En <strong>lazo cerrado</strong> se mide el resultado, se compara con la consigna y se corrige según el error <var>e</var> = <var>r</var> − <var>T</var>. Es la base del control moderno y lo que hace PlantTwin.</p>
+  <div class="dg">
+    <svg viewBox="0 0 760 230" role="img" aria-label="Diagrama de un lazo de control cerrado: la consigna y la medición se restan, el error entra al controlador PID, la señal pasa al actuador y a la planta, y la temperatura vuelve por el sensor.">
+      <defs><marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" class="dg-ah"/></marker></defs>
+      <text x="6" y="92" class="dg-t">r</text><text x="6" y="108" class="dg-s">consigna</text>
+      <path class="dg-l" d="M64 100H106" marker-end="url(#ah1)"/>
+      <circle cx="124" cy="100" r="17" class="dg-hot"/>
+      <text x="124" y="105" text-anchor="middle" class="dg-t">Σ</text>
+      <text x="96" y="90" class="dg-s">+</text><text x="132" y="140" class="dg-s">−</text>
+      <path class="dg-l" d="M141 100H190" marker-end="url(#ah1)"/>
+      <text x="156" y="90" class="dg-s">e</text>
+      <rect x="192" y="68" width="132" height="64" rx="4" class="dg-hot"/>
+      <text x="258" y="96" text-anchor="middle" class="dg-t">Controlador PID</text>
+      <text x="258" y="114" text-anchor="middle" class="dg-s">Kp · Ki · Kd</text>
+      <path class="dg-l" d="M324 100H374" marker-end="url(#ah1)"/>
+      <text x="344" y="90" class="dg-s">u</text>
+      <rect x="376" y="68" width="110" height="64" rx="4" class="dg-box"/>
+      <text x="431" y="96" text-anchor="middle" class="dg-t">Actuador</text>
+      <text x="431" y="114" text-anchor="middle" class="dg-s">satura 0–100 %</text>
+      <path class="dg-l" d="M486 100H538" marker-end="url(#ah1)"/>
+      <rect x="540" y="68" width="124" height="64" rx="4" class="dg-box"/>
+      <text x="602" y="96" text-anchor="middle" class="dg-t">Proceso térmico</text>
+      <text x="602" y="114" text-anchor="middle" class="dg-s">G = 0.6 · τ = 12 s</text>
+      <path class="dg-l" d="M664 100H736" marker-end="url(#ah1)"/>
+      <text x="740" y="104" class="dg-t">T</text>
+      <circle cx="700" cy="100" r="3.5" class="dg-dot"/>
+      <path class="dg-l" d="M700 100V190H124V119" marker-end="url(#ah1)"/>
+      <rect x="330" y="172" width="120" height="36" rx="4" class="dg-box"/>
+      <text x="390" y="194" text-anchor="middle" class="dg-t">Sensor</text>
+      <text x="470" y="182" class="dg-s">T medida</text>
+    </svg>
+  </div>
+
+  <h3>Qué se le pide a un buen control</h3>
+  <ul>
+    <li><strong>Estabilidad:</strong> que la respuesta no crezca ni oscile sin límite.</li>
+    <li><strong>Precisión:</strong> error final pequeño, idealmente cero.</li>
+    <li><strong>Rapidez:</strong> llegar pronto a la consigna.</li>
+    <li><strong>Amortiguamiento:</strong> poco sobreimpulso.</li>
+    <li><strong>Robustez:</strong> que siga funcionando ante perturbaciones y errores del modelo.</li>
+  </ul>
+  <p>Estos objetivos se contraponen. Más rapidez suele traer más sobreimpulso. Diseñar un control es elegir el compromiso que exige el proceso.</p>
+
+  <h3>La planta tiene inercia</h3>
+  <p>Los procesos no responden al instante. Un sistema térmico simple se modela como de primer orden y queda descrito por dos números. La <strong>ganancia</strong> <var>G</var> dice cuánto cambia la salida en régimen permanente por cada unidad de entrada (aquí, 0.6 °C por cada 1 % de potencia). La <strong>constante de tiempo</strong> <var>τ</var> dice qué tan lenta es: tras un escalón de entrada, la salida recorre alrededor del 63 % del camino en un <var>τ</var> (12 s aquí). Esa inercia obliga al controlador a actuar con anticipación, porque la temperatura sigue subiendo un rato después de que se reduce la potencia.</p>
+
+  <h3>Qué es un controlador PID</h3>
+  <p>Es un algoritmo de realimentación que calcula la señal de control a partir del error con tres términos:</p>
+  <div class="eq"><span class="f"><var>u</var>(<var>t</var>) = <var>K<sub>p</sub></var> <var>e</var>(<var>t</var>) + <var>K<sub>i</sub></var> <span class="big">∫<span class="lim"><span><var>t</var></span><span>0</span></span></span> <var>e</var>(<var>τ</var>) d<var>τ</var> + <var>K<sub>d</sub></var> <span class="frac"><span>d<var>e</var></span><span>d<var>t</var></span></span></span><span class="tag">Ec. 1</span></div>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Término</th><th>Mira</th><th>Analogía</th><th>Efecto</th><th>Riesgo</th></tr></thead>
+    <tbody>
+      <tr><td><strong>P</strong> proporcional</td><td>El error de ahora</td><td>Abrir la llave de la regadera en proporción a qué tan fría está el agua</td><td>Respuesta rápida, reduce el error</td><td>Deja error residual; con ganancia alta oscila</td></tr>
+      <tr><td><strong>I</strong> integral</td><td>El error acumulado</td><td>Seguir abriendo mientras el agua siga fría</td><td>Elimina el error permanente</td><td>Sobreimpulso, lentitud, <i>windup</i></td></tr>
+      <tr><td><strong>D</strong> derivativo</td><td>La tendencia del error</td><td>Frenar al ver que ya se acerca la temperatura buscada</td><td>Amortigua y reduce el sobreimpulso</td><td>Amplifica el ruido del sensor</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>Efecto típico de aumentar cada ganancia (guía general; con una planta concreta puede haber excepciones, como se vio con <var>K<sub>i</sub></var>):</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Ganancia ↑</th><th>Tiempo de subida</th><th>Sobreimpulso</th><th>Establecimiento</th><th>Error permanente</th></tr></thead>
+    <tbody>
+      <tr><td><var>K<sub>p</sub></var></td><td>Disminuye</td><td>Aumenta</td><td>Cambio pequeño</td><td>Disminuye</td></tr>
+      <tr><td><var>K<sub>i</sub></var></td><td>Disminuye poco</td><td>Aumenta</td><td>Aumenta</td><td>Se elimina</td></tr>
+      <tr><td><var>K<sub>d</sub></var></td><td>Cambio pequeño</td><td>Disminuye</td><td>Disminuye</td><td>Sin efecto</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Detalles de implementación que importan</h3>
+  <ul>
+    <li><strong>Saturación:</strong> el actuador tiene límites (aquí 0 a 100 %). Cuando la salida satura, el controlador no obtiene el efecto que pide.</li>
+    <li><strong>Anti-windup:</strong> técnica para que la integral no siga acumulando mientras la salida está saturada.</li>
+    <li><strong>Derivada sobre la medición:</strong> evita un golpe brusco cuando cambia la consigna. Es lo que hace PlantTwin.</li>
+    <li><strong>Filtro en la derivada:</strong> necesario cuando el sensor tiene ruido.</li>
+    <li><strong>PI en la práctica:</strong> muchos lazos industriales usan solo P e I, porque el término D es sensible al ruido y a menudo aporta poco.</li>
+    <li><strong>Sintonía:</strong> ajustar <var>K<sub>p</sub></var>, <var>K<sub>i</sub></var> y <var>K<sub>d</sub></var>. Métodos habituales: prueba y error guiada, Ziegler–Nichols, Cohen–Coon y autosintonía.</li>
+  </ul>
+  <p>El PID resuelve la gran mayoría de los lazos simples. Cuando hay varias variables acopladas, tiempos muertos grandes o restricciones, se usan esquemas como control en cascada, <i>feedforward</i> o control predictivo (MPC). Conviene dominar el PID antes de pasar a ellos.</p>
+</section>
+
+<!-- ============ MODELO ============ -->
+<section id="modelo">
+  <p class="kick">Matemáticas</p>
+  <h2>Modelo y métricas</h2>
+
+  <h3>Notación</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Símbolo</th><th>Significado</th><th>Valor o unidad</th></tr></thead>
+    <tbody>
+      <tr><td><var>r</var></td><td>Consigna</td><td>60 °C</td></tr>
+      <tr><td><var>T</var></td><td>Temperatura de la planta</td><td>°C</td></tr>
+      <tr><td><var>T</var><sub>amb</sub></td><td>Temperatura ambiente e inicial</td><td>25 °C</td></tr>
+      <tr><td><var>e</var></td><td>Error, <var>r</var> − <var>T</var></td><td>°C</td></tr>
+      <tr><td><var>u</var></td><td>Potencia aplicada tras la saturación</td><td>0 a 100 %</td></tr>
+      <tr><td><var>G</var></td><td>Ganancia térmica</td><td>0.6 °C por % de potencia</td></tr>
+      <tr><td><var>τ</var></td><td>Constante de tiempo</td><td>12 s</td></tr>
+      <tr><td>Δ<var>t</var></td><td>Paso de cálculo</td><td>0.2 s (501 muestras en 100 s)</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>La planta</h3>
+  <div class="eq"><span class="f"><span class="frac"><span>d<var>T</var></span><span>d<var>t</var></span></span> = <span class="frac"><span><var>T</var><sub>amb</sub> + <var>G</var> <var>u</var> − <var>T</var></span><span><var>τ</var></span></span></span><span class="tag">Ec. 2</span></div>
+  <p>Con <var>u</var> en porcentaje, la temperatura de régimen para una potencia constante es <var>T</var><sub>amb</sub> + <var>G</var> <var>u</var>. Tras un escalón de potencia, <var>T</var>(<var>t</var>) = <var>T</var><sub>amb</sub> + <var>G</var> <var>u</var> (1 − e<sup>−<var>t</var>/<var>τ</var></sup>), que alcanza 63.2 % del cambio en <var>t</var> = <var>τ</var>.</p>
+
+  <h3>El algoritmo, paso a paso</h3>
+  <p>En cada instante <var>k</var> (cada 0.2 s) el simulador hace esto:</p>
+  <ol>
+    <li>Error: <span class="m"><var>e<sub>k</sub></var> = <var>r</var> − <var>T<sub>k</sub></var></span></li>
+    <li>Integral acumulada: <span class="m"><var>I<sub>k</sub></var> = <var>I</var><sub><var>k</var>−1</sub> + <var>K<sub>i</sub></var> <var>e<sub>k</sub></var> Δ<var>t</var></span></li>
+    <li>Derivada sobre la medición: <span class="m"><var>D<sub>k</sub></var> = −<var>K<sub>d</sub></var> (<var>T<sub>k</sub></var> − <var>T</var><sub><var>k</var>−1</sub>) / Δ<var>t</var></span> (igual a 0 en <var>k</var> = 0)</li>
+    <li>Señal sin limitar: <span class="m"><var>u</var><sub>raw</sub> = <var>K<sub>p</sub></var> <var>e<sub>k</sub></var> + <var>I<sub>k</sub></var> + <var>D<sub>k</sub></var></span>, y con saturación <span class="m"><var>u<sub>k</sub></var> = mín(100, máx(0, <var>u</var><sub>raw</sub>))</span></li>
+    <li>Planta (Euler explícito): <span class="m"><var>T</var><sub><var>k</var>+1</sub> = <var>T<sub>k</sub></var> + Δ<var>t</var> (<var>T</var><sub>amb</sub> + <var>G</var> <var>u<sub>k</sub></var> − <var>T<sub>k</sub></var>) / <var>τ</var></span></li>
+  </ol>
+  <p>Variante con anti-windup por limitación: si <var>u</var><sub>raw</sub> pasa de 100 con <var>e</var> &gt; 0, o es menor que 0 con <var>e</var> &lt; 0, la integral conserva su valor anterior en ese paso.</p>
+
+  <h3>Métricas</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Métrica</th><th>Definición</th></tr></thead>
+    <tbody>
+      <tr><td>Temperatura máxima</td><td><var>T</var><sub>máx</sub>, el mayor valor de la serie simulada</td></tr>
+      <tr><td>Sobreimpulso</td><td><var>M<sub>p</sub></var> = máx(0, <var>T</var><sub>máx</sub> − <var>r</var>)</td></tr>
+      <tr><td>Sobreimpulso porcentual</td><td><var>M<sub>p</sub></var> / (<var>r</var> − <var>T</var><sub>inicial</sub>) × 100. Con <var>K<sub>i</sub></var> = 0.5: 3.2 / 35 ≈ 9.14 %. Es una convención; otras lo expresan respecto a <var>r</var></td></tr>
+      <tr><td>Error final</td><td><var>e<sub>f</sub></var> = <var>r</var> − <var>T<sub>f</sub></var>, con <var>T<sub>f</sub></var> la última temperatura registrada</td></tr>
+      <tr><td>Tiempo de establecimiento</td><td>Primer instante desde el cual |<var>T</var> − <var>r</var>| ≤ banda hasta el final de la simulación. Banda = 0.02 (<var>r</var> − <var>T</var><sub>amb</sub>) = 0.7 °C. Si no se cumple, "no alcanzado"</td></tr>
+      <tr><td>Potencia final</td><td><var>u</var> en el último instante</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Dos resultados que se pueden verificar a mano</h3>
+  <div class="eq"><span class="f"><var>u</var><sub>∞</sub> = <span class="frac"><span><var>r</var> − <var>T</var><sub>amb</sub></span><span><var>G</var></span></span> = <span class="frac"><span>60 − 25</span><span>0.6</span></span> = 58.33 %</span><span class="tag">Ec. 3 · con integral</span></div>
+  <div class="eq"><span class="f"><var>e</var><sub>∞</sub> = <span class="frac"><span><var>r</var> − <var>T</var><sub>amb</sub></span><span>1 + <var>G</var> <var>K<sub>p</sub></var></span></span> = <span class="frac"><span>35</span><span>1 + 0.6 · 3</span></span> = 12.5 °C</span><span class="tag">Ec. 4 · solo P</span></div>
+  <p>La Ec. 3 sale de pedir error cero: el calefactor solo repone lo que la cámara pierde hacia el ambiente. La Ec. 4 sale de igualar <var>T</var> = <var>T</var><sub>amb</sub> + <var>G</var> <var>K<sub>p</sub></var> (<var>r</var> − <var>T</var>) y despejar. Ambas coinciden con las corridas registradas.</p>
+</section>
+
+<!-- ============ FICHA TÉCNICA ============ -->
+<section id="ficha">
+  <p class="kick">Ficha técnica</p>
+  <h2>Arquitectura, stack y configuración</h2>
+
+  <h3>Arquitectura</h3>
+  <p>El navegador solo presenta resultados. Todo el cálculo vive en el backend. Esa separación permite cambiar la visualización sin tocar el modelo de control, o cambiar el modelo sin rehacer la interfaz.</p>
+  <div class="dg">
+    <svg viewBox="0 0 800 240" role="img" aria-label="Arquitectura: el formulario del dashboard en el navegador envía POST /simulate a FastAPI; el servidor valida los parámetros, ejecuta el modelo térmico con PID, calcula las métricas y devuelve JSON, que el dashboard grafica.">
+      <defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" class="dg-ah"/></marker></defs>
+      <rect x="0" y="6" width="800" height="104" rx="6" class="dg-lane"/>
+      <rect x="0" y="130" width="800" height="104" rx="6" class="dg-lane"/>
+      <text x="10" y="22" class="dg-s">NAVEGADOR · React + TypeScript + Vite · localhost:5173</text>
+      <text x="10" y="146" class="dg-s">SERVIDOR · Python + FastAPI + Uvicorn · 127.0.0.1:8000</text>
+      <rect x="10" y="40" width="140" height="56" rx="4" class="dg-box"/>
+      <text x="80" y="64" text-anchor="middle" class="dg-t">Usuario</text><text x="80" y="82" text-anchor="middle" class="dg-s">cambia parámetros</text>
+      <rect x="170" y="40" width="140" height="56" rx="4" class="dg-hot"/>
+      <text x="240" y="64" text-anchor="middle" class="dg-t">Formulario</text><text x="240" y="82" text-anchor="middle" class="dg-s">envía los valores</text>
+      <rect x="650" y="40" width="140" height="56" rx="4" class="dg-hot"/>
+      <text x="720" y="64" text-anchor="middle" class="dg-t">Gráficas y métricas</text><text x="720" y="82" text-anchor="middle" class="dg-s">Recharts</text>
+      <rect x="170" y="164" width="140" height="56" rx="4" class="dg-hot"/>
+      <text x="240" y="188" text-anchor="middle" class="dg-t">FastAPI</text><text x="240" y="206" text-anchor="middle" class="dg-s">POST /simulate</text>
+      <rect x="330" y="164" width="140" height="56" rx="4" class="dg-box"/>
+      <text x="400" y="188" text-anchor="middle" class="dg-t">Validación</text><text x="400" y="206" text-anchor="middle" class="dg-s">de parámetros</text>
+      <rect x="490" y="164" width="140" height="56" rx="4" class="dg-box"/>
+      <text x="560" y="188" text-anchor="middle" class="dg-t">Modelo + PID</text><text x="560" y="206" text-anchor="middle" class="dg-s">T(t) y u(t)</text>
+      <rect x="650" y="164" width="140" height="56" rx="4" class="dg-box"/>
+      <text x="720" y="188" text-anchor="middle" class="dg-t">Métricas</text><text x="720" y="206" text-anchor="middle" class="dg-s">respuesta JSON</text>
+      <path class="dg-l" d="M150 68H168" marker-end="url(#ah2)"/>
+      <path class="dg-l" d="M240 96V162" marker-end="url(#ah2)"/>
+      <path class="dg-l" d="M310 192H328" marker-end="url(#ah2)"/>
+      <path class="dg-l" d="M470 192H488" marker-end="url(#ah2)"/>
+      <path class="dg-l" d="M630 192H648" marker-end="url(#ah2)"/>
+      <path class="dg-l" d="M720 162V98" marker-end="url(#ah2)"/>
+    </svg>
+  </div>
+
+  <h3>Stack</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Componente</th><th>Función</th></tr></thead>
+    <tbody>
+      <tr><td>Python (<code>backend/main.py</code>)</td><td>Modelo térmico, controlador PID y cálculo de métricas</td></tr>
+      <tr><td>FastAPI + Uvicorn</td><td>Servicio HTTP: <code>GET /health</code> y <code>POST /simulate</code>; documentación interactiva en <code>/docs</code></td></tr>
+      <tr><td>React + TypeScript</td><td>Interfaz del dashboard</td></tr>
+      <tr><td>Vite</td><td>Servidor de desarrollo del frontend</td></tr>
+      <tr><td>Recharts</td><td>Gráficas de temperatura, consigna y señal de control</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="foot">Las versiones exactas deben registrarse con <code>pip freeze</code> y <code>npm ls --depth=0</code> al publicar los resultados.</p>
+
+  <h3>Estructura del proyecto</h3>
+<pre><code>PlantTwin/
+├── backend/
+│   ├── main.py
+│   └── requirements.txt
+└── frontend/
+    ├── src/
+    │   ├── App.tsx
+    │   ├── index.css
+    │   └── main.tsx
+    └── package.json</code></pre>
+
+  <h3>Configuración del experimento</h3>
+  <div class="cols2">
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Parámetro</th><th class="n">Valor</th></tr></thead>
+      <tbody>
+        <tr><td>Consigna</td><td class="n">60 °C</td></tr>
+        <tr><td>Temperatura inicial y ambiente</td><td class="n">25 °C</td></tr>
+        <tr><td><var>K<sub>p</sub></var></td><td class="n">3</td></tr>
+        <tr><td><var>K<sub>i</sub></var></td><td class="n">0 a 0.5</td></tr>
+        <tr><td><var>K<sub>d</sub></var></td><td class="n">0.4</td></tr>
+        <tr><td>Duración</td><td class="n">100 s</td></tr>
+        <tr><td>Paso temporal</td><td class="n">0.2 s</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Modelo y entorno</th><th class="n">Valor</th></tr></thead>
+      <tbody>
+        <tr><td>Ganancia térmica <var>G</var></td><td class="n">0.6</td></tr>
+        <tr><td>Constante de tiempo <var>τ</var></td><td class="n">12 s</td></tr>
+        <tr><td>Saturación del control</td><td class="n">0 a 100 %</td></tr>
+        <tr><td>Banda de establecimiento</td><td class="n">±0.7 °C</td></tr>
+        <tr><td>Backend</td><td class="n">127.0.0.1:8000</td></tr>
+        <tr><td>Frontend</td><td class="n">localhost:5173</td></tr>
+        <tr><td>Persistencia</td><td class="n">ninguna</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <h3>Ejecutar en local (Windows, PowerShell)</h3>
+<pre><code># Backend
+cd PlantTwin\backend
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn main:app --reload --port 8000
+
+# Frontend, en otra terminal
+cd PlantTwin\frontend
+npm install
+npm run dev</code></pre>
+  <p>Después se abre <code>http://localhost:5173</code>. El backend permite ese origen mediante CORS. Para comprobar que responde: <code>http://127.0.0.1:8000/health</code>. El esquema exacto de la petición está en <code>http://127.0.0.1:8000/docs</code>.</p>
+</section>
+
+<!-- ============ VALIDEZ ============ -->
+<section id="validez">
+  <p class="kick">Validez</p>
+  <h2>Qué se verificó y qué falta</h2>
+
+  <h3>Verificado</h3>
+  <ul>
+    <li>Una simulación independiente, escrita aparte con las ecuaciones de la sección Modelo, reproduce al segundo decimal las cinco corridas registradas, salvo los 0.01 % de potencia señalados en la tabla.</li>
+    <li>El error de 12.5 °C sin integral y la potencia de 58.33 % en régimen coinciden con las Ec. 3 y 4.</li>
+    <li>El simulador de esta página es una versión en JavaScript de esa simulación y devuelve las mismas cifras que la tabla, incluidas las filas calculadas.</li>
+  </ul>
+
+  <h3>Limitaciones</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Limitación actual</th><th>Consecuencia</th><th>Mejora posible</th></tr></thead>
+    <tbody>
+      <tr><td>Modelo térmico simplificado</td><td>No reproduce todos los fenómenos físicos</td><td>Calibrarlo con datos reales</td></tr>
+      <tr><td>Sin ruido de sensor</td><td>No se puede estudiar la sensibilidad al ruido</td><td>Introducir ruido controlado</td></tr>
+      <tr><td>Sin perturbaciones externas</td><td>No se sabe cómo recupera la temperatura ante cambios de carga</td><td>Aplicar perturbaciones repetibles</td></tr>
+      <tr><td>Sin anti-windup en el backend</td><td>La integral se acumula durante la saturación</td><td>Comparar estrategias (esta página muestra una)</td></tr>
+      <tr><td>Sin validación contra equipo real</td><td>Se desconoce el error del modelo respecto a una planta física</td><td>Validación experimental controlada</td></tr>
+      <tr><td>Sin registro persistente</td><td>Es fácil perder o confundir resultados</td><td>Exportar CSV con metadatos por corrida</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note"><p><strong>Antes de conectar cualquier simulación a un equipo industrial</strong> se necesitan límites seguros, validación técnica, supervisión y protecciones independientes del software experimental.</p></div>
+
+  <h3>Protocolo para repetir el experimento</h3>
+  <ol>
+    <li>Iniciar el backend y comprobar <code>GET /health</code>.</li>
+    <li>Abrir el dashboard y verificar que se conecta a la API.</li>
+    <li>Fijar consigna 60 °C, <var>K<sub>p</sub></var> = 3, <var>K<sub>d</sub></var> = 0.4 y 100 s.</li>
+    <li>Modificar únicamente <var>K<sub>i</sub></var>.</li>
+    <li>Ejecutar y esperar a que se actualicen gráficas y métricas.</li>
+    <li>Registrar resultados y observaciones, incluida la potencia final y cualquier saturación visible.</li>
+    <li>Repetir al menos una corrida con los mismos parámetros para comprobar la reproducibilidad.</li>
+  </ol>
+  <details>
+    <summary>Ver la hoja de registro experimental</summary>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Campo</th><th>Valor</th></tr></thead>
+      <tbody>
+        <tr><td>Identificador</td><td>PT-EXP01-…</td></tr>
+        <tr><td>Fecha y hora</td><td>Registrar</td></tr>
+        <tr><td>Versión del modelo</td><td>Registrar (si cambia la planta, el PID o el cálculo del establecimiento, los resultados dejan de ser comparables)</td></tr>
+        <tr><td>Consigna, <var>K<sub>p</sub></var>, <var>K<sub>i</sub></var>, <var>K<sub>d</sub></var>, duración, paso</td><td>60 °C, 3, valor ensayado, 0.4, 100 s, 0.2 s</td></tr>
+        <tr><td>Temperatura máxima, sobreimpulso, temperatura final, error final</td><td>Registrar</td></tr>
+        <tr><td>Tiempo de establecimiento, potencia final</td><td>Registrar</td></tr>
+        <tr><td>Saturación observada</td><td>Sí / No / No verificada</td></tr>
+        <tr><td>Observaciones</td><td>Registrar</td></tr>
+      </tbody>
+    </table></div>
+  </details>
+</section>
+
+<!-- ============ APLICACIONES ============ -->
+<section id="aplicaciones">
+  <p class="kick">Casos de uso</p>
+  <h2>Dónde se aplica y qué más se podría simular</h2>
+
+  <h3>Dónde se usa el PID</h3>
+  <ul>
+    <li><strong>Temperatura:</strong> hornos, estufas de laboratorio, incubadoras, cámaras ambientales, extrusoras e inyectoras de plástico, soldadura por reflujo.</li>
+    <li><strong>Velocidad:</strong> control de crucero, motores con variador, gobernadores de motores de generadores.</li>
+    <li><strong>Tensión:</strong> reguladores de voltaje de alternadores.</li>
+    <li><strong>Presión y flujo:</strong> bombas, compresores, válvulas de control.</li>
+    <li><strong>Nivel:</strong> tanques y calderas.</li>
+    <li><strong>Posición:</strong> robots, drones, servomecanismos.</li>
+  </ul>
+
+  <h3>Extensiones teóricas con la misma arquitectura</h3>
+  <p>Ninguna está implementada. La idea es sustituir solo el módulo de la planta (<code>T<sub>k+1</sub> = f(T<sub>k</sub>, u<sub>k</sub>)</code>) y dejar intactos el controlador, la API y la interfaz.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Planta</th><th>Modelo</th><th>Qué enseñaría</th></tr></thead>
+    <tbody>
+      <tr><td>Velocidad de un motor DC</td><td>Primer orden: <var>J</var> d<var>ω</var>/d<var>t</var> = <var>K</var> <var>u</var> − <var>b</var> <var>ω</var></td><td>Lo mismo que PlantTwin con otra variable y otras unidades</td></tr>
+      <tr><td>Nivel de un tanque</td><td>Integrador: <var>A</var> d<var>h</var>/d<var>t</var> = <var>q</var><sub>in</sub> − <var>q</var><sub>out</sub></td><td>Un proceso sin autorregulación; a menudo basta P o PI</td></tr>
+      <tr><td>Posición de un servo</td><td>Segundo orden: <var>J</var> <var>θ</var>″ + <var>b</var> <var>θ</var>′ = <var>K</var> <var>u</var></td><td>Oscilación real, amortiguamiento y el papel de <var>K<sub>d</sub></var></td></tr>
+      <tr><td>Flujo en una tubería</td><td>Con retardo: la salida responde a <var>u</var>(<var>t</var> − <var>θ</var>)</td><td>Por qué un tiempo muerto limita la ganancia aplicable</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Cada una agregaría una pregunta de ingeniería nueva con una sola capacidad adicional, que es el criterio rector del proyecto: toda funcionalidad nueva debe producir resultados que se puedan explicar, medir y repetir.</p>
+
+  <h3>Próximas etapas del proyecto</h3>
+  <ol>
+    <li>Cerrar el experimento de <var>K<sub>i</sub></var>: completar <var>K<sub>i</sub></var> = 0.4 en el dashboard y repetir <var>K<sub>i</sub></var> = 0.3.</li>
+    <li>Estudiar <var>K<sub>d</sub></var> con <var>K<sub>p</sub></var> y <var>K<sub>i</sub></var> fijos.</li>
+    <li>Evaluar perturbaciones: una pérdida adicional de calor o un cambio de carga.</li>
+    <li>Registrar cada corrida en CSV con sus metadatos.</li>
+    <li>Acercarse a la automatización industrial: PLC, entradas y salidas, sensores, actuadores y protocolos.</li>
+  </ol>
+</section>
+
+<!-- ============ REPOSITORIO ============ -->
+<section id="repositorio">
+  <p class="kick">Código</p>
+  <h2>Repositorio</h2>
+  <p>El código del simulador, la documentación y los datos están en GitHub. Esta página también se puede consultar desde el blog.</p>
+  <div class="actions">
+    <a class="btn primary" data-repo href="#">Ver el repositorio</a>
+    <a class="btn" data-blog href="#">Volver al blog</a>
+  </div>
+</section>
+
+</div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Proyecto personal de aprendizaje. El código del simulador se generó con asistencia de IA y los resultados se contrastaron con una simulación independiente. No está relacionado con ningún empleador ni producto comercial, y no debe usarse para operar equipos reales.</p>
+  </div>
+</footer>
+
+<script>
+/* Modelo de PlantTwin: planta térmica de primer orden + PID con derivada sobre la medición. */
+const MODEL = { Tamb: 25, G: 0.6, tau: 12, dt: 0.2, dur: 100 };
+
+function simulate(p) {
+  const { Tamb, G, tau, dt, dur } = MODEL;
+  const n = Math.round(dur / dt);
+  const t = [], T = [], u = [];
+  let temp = Tamb, I = 0, prev = Tamb;
+  for (let k = 0; k <= n; k++) {
+    const e = p.r - temp;
+    const D = k > 0 ? (-p.Kd * (temp - prev)) / dt : 0;
+    let Inew = I + p.Ki * e * dt;
+    const raw = p.Kp * e + Inew + D;
+    const out = Math.min(100, Math.max(0, raw));
+    if (p.aw && ((raw > 100 && e > 0) || (raw < 0 && e < 0))) Inew = I;
+    I = Inew;
+    t.push(Math.round(k * dt * 10) / 10);
+    T.push(temp);
+    u.push(out);
+    prev = temp;
+    temp = temp + (dt * (Tamb + G * out - temp)) / tau;
+  }
+  return { t, T, u };
+}
+
+function metrics(sim, r) {
+  const band = 0.02 * (r - MODEL.Tamb);
+  let Tmax = -Infinity;
+  for (const v of sim.T) if (v > Tmax) Tmax = v;
+  const n = sim.T.length;
+  let last = -1;
+  for (let i = 0; i < n; i++) if (Math.abs(sim.T[i] - r) > band + 1e-9) last = i;
+  const ts = last === n - 1 ? null : sim.t[last + 1];
+  return { band, Tmax, Mp: Math.max(0, Tmax - r), ef: r - sim.T[n - 1], ts, uf: sim.u[n - 1] };
+}
+
+if (typeof module !== 'undefined') module.exports = { simulate, metrics, MODEL };
+
+(function () {
+  'use strict';
+  var REPO_URL = '';   // pega aquí la URL del repositorio de GitHub
+  var BLOG_URL = '';   // pega aquí la URL de la entrada del blog
+
+  var $ = function (id) { return document.getElementById(id); };
+  var fx = function (v, d) { return v.toFixed(d); };
+
+  /* enlaces externos */
+  document.querySelectorAll('[data-repo]').forEach(function (a) {
+    if (REPO_URL) { a.href = REPO_URL; a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+    else { a.removeAttribute('href'); a.classList.add('off'); a.setAttribute('aria-disabled', 'true'); a.insertAdjacentHTML('beforeend', ' <small>· pronto</small>'); }
+  });
+  document.querySelectorAll('[data-blog]').forEach(function (a) {
+    if (BLOG_URL) { a.href = BLOG_URL; a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+    else { a.hidden = true; }
+  });
+
+  /* ---------- gráfica de líneas ---------- */
+  var uid = 0;
+  function niceStep(range, n) {
+    var raw = range / n, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+    return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p;
+  }
+  function ticksOf(a, b, n) {
+    var s = niceStep(b - a, n), vals = [], k0 = Math.ceil(a / s - 1e-9);
+    for (var k = k0; k * s <= b + 1e-9; k++) vals.push(+(k * s).toFixed(10));
+    return { vals: vals, dec: Math.max(0, -Math.floor(Math.log10(s) + 1e-9)) };
+  }
+
+  function makeChart(el, opts) {
+    var id = 'c' + (++uid), o = opts, lastW = 0;
+    el.classList.add('chart');
+    var tip = document.createElement('div');
+    tip.className = 'tip'; tip.hidden = true;
+
+    function legendHtml() {
+      if (o.legend === false) return '';
+      var h = '<div class="legend">';
+      o.series.forEach(function (s) {
+        if (s.hidden) return;
+        h += '<span class="lg"><i class="sw' + (s.dash ? ' dash' : '') + '" style="--c:' + s.color + '"></i>' + s.name + '</span>';
+      });
+      (o.refs || []).forEach(function (r) { if (r.legend) h += '<span class="lg"><i class="sw dash" style="--c:var(--ink2)"></i>' + r.legend + '</span>'; });
+      (o.bands || []).forEach(function (b) { h += '<span class="lg"><i class="sw fill" style="--c:' + b.swatch + '"></i>' + b.name + '</span>'; });
+      return h + '</div>';
+    }
+
+    function draw() {
+      var W = Math.max(300, Math.floor(el.clientWidth || 600));
+      lastW = W;
+      var H = o.height || 240, m = { l: 48, r: 16, t: 10, b: o.xLabel ? 46 : 28 };
+      var iw = W - m.l - m.r, ih = H - m.t - m.b, x = o.x;
+      var x0 = o.xDomain ? o.xDomain[0] : x[0], x1 = o.xDomain ? o.xDomain[1] : x[x.length - 1];
+      var vis = o.series.filter(function (s) { return !s.hidden; });
+      var y0, y1;
+      if (o.yDomain) { y0 = o.yDomain[0]; y1 = o.yDomain[1]; }
+      else {
+        var lo = Infinity, hi = -Infinity;
+        vis.forEach(function (s) { s.y.forEach(function (v) { if (v == null) return; if (v < lo) lo = v; if (v > hi) hi = v; }); });
+        if (!isFinite(lo)) { lo = 0; hi = 1; }
+        var pad = (hi - lo || 1) * 0.08; y0 = lo - pad; y1 = hi + pad;
+      }
+      var sx = function (v) { return m.l + (v - x0) / (x1 - x0) * iw; };
+      var sy = function (v) { return m.t + ih - (v - y0) / (y1 - y0) * ih; };
+      var yt = ticksOf(y0, y1, o.yTickN || 5);
+      var xt = o.xTicks ? { vals: o.xTicks, dec: o.xDec || 0 } : ticksOf(x0, x1, o.xTickN || 6);
+
+      var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + (o.title || '') + '">';
+      s += '<defs><clipPath id="' + id + '"><rect x="' + m.l + '" y="' + m.t + '" width="' + iw + '" height="' + ih + '"/></clipPath></defs>';
+      yt.vals.forEach(function (v) {
+        var yy = sy(v);
+        s += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + yy.toFixed(1) + '" y2="' + yy.toFixed(1) + '" stroke="var(--grid)"/>';
+        s += '<text class="ax" x="' + (m.l - 8) + '" y="' + (yy + 4).toFixed(1) + '" text-anchor="end">' + v.toFixed(yt.dec) + '</text>';
+      });
+      s += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + (m.t + ih) + '" y2="' + (m.t + ih) + '" stroke="var(--axis)"/>';
+      xt.vals.forEach(function (v) {
+        var xx = sx(v).toFixed(1);
+        s += '<line x1="' + xx + '" x2="' + xx + '" y1="' + (m.t + ih) + '" y2="' + (m.t + ih + 4) + '" stroke="var(--axis)"/>';
+        s += '<text class="ax" x="' + xx + '" y="' + (m.t + ih + 17) + '" text-anchor="middle">' + v.toFixed(xt.dec) + '</text>';
+      });
+      if (o.xLabel) s += '<text class="ax2" x="' + (m.l + iw / 2) + '" y="' + (H - 6) + '" text-anchor="middle">' + o.xLabel + '</text>';
+      (o.bands || []).forEach(function (b) {
+        var ya = sy(Math.min(y1, b.y1)), yb = sy(Math.max(y0, b.y0));
+        s += '<rect x="' + m.l + '" y="' + ya.toFixed(1) + '" width="' + iw + '" height="' + Math.max(0, yb - ya).toFixed(1) + '" fill="' + b.color + '"/>';
+      });
+      (o.refs || []).forEach(function (r) {
+        if (r.y < y0 || r.y > y1) return;
+        var yy = sy(r.y);
+        s += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + yy.toFixed(1) + '" y2="' + yy.toFixed(1) + '" stroke="var(--ink2)" stroke-dasharray="5 4" stroke-width="1.25"/>';
+        if (r.label) s += '<text class="ax2" x="' + (m.l + 6) + '" y="' + (yy - 5).toFixed(1) + '">' + r.label + '</text>';
+      });
+      vis.forEach(function (se) {
+        var d = '', pen = false, i, v;
+        for (i = 0; i < x.length; i++) {
+          v = se.y[i];
+          if (v == null) { pen = false; continue; }
+          d += (pen ? 'L' : 'M') + sx(x[i]).toFixed(1) + ' ' + sy(v).toFixed(1); pen = true;
+        }
+        s += '<path d="' + d + '" fill="none" stroke="' + se.color + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" clip-path="url(#' + id + ')"/>';
+        if (se.marker) {
+          for (i = 0; i < x.length; i++) {
+            v = se.y[i]; if (v == null) continue;
+            s += '<circle cx="' + sx(x[i]).toFixed(1) + '" cy="' + sy(v).toFixed(1) + '" r="4" fill="' + se.color + '" stroke="var(--surface)" stroke-width="2"/>';
+          }
+        }
+      });
+      s += '<line id="' + id + 'x" y1="' + m.t + '" y2="' + (m.t + ih) + '" stroke="var(--ink2)" stroke-width="1" visibility="hidden"/>';
+      vis.forEach(function (se, k) { s += '<circle id="' + id + 'd' + k + '" r="5" fill="' + se.color + '" stroke="var(--surface)" stroke-width="2" visibility="hidden"/>'; });
+      s += '<rect id="' + id + 'h" x="' + m.l + '" y="' + m.t + '" width="' + iw + '" height="' + ih + '" fill="transparent" style="touch-action:pan-y"/></svg>';
+      el.innerHTML = legendHtml() + s;
+      el.appendChild(tip);
+
+      var svg = el.querySelector('svg'), hit = svg.querySelector('#' + id + 'h'), xl = svg.querySelector('#' + id + 'x');
+      var dots = vis.map(function (_, k) { return svg.querySelector('#' + id + 'd' + k); });
+      var fmtX = o.fmtX || function (v) { return v.toFixed(1) + ' s'; };
+      var fmtY = o.fmtY || function (v) { return v.toFixed(2); };
+      function hide() { xl.setAttribute('visibility', 'hidden'); dots.forEach(function (c) { c.setAttribute('visibility', 'hidden'); }); tip.hidden = true; }
+      function show(ev) {
+        var r = svg.getBoundingClientRect();
+        var vx = (ev.clientX - r.left) * W / r.width;
+        var xv = x0 + (vx - m.l) / iw * (x1 - x0);
+        var lo2 = 0, hi2 = x.length - 1;
+        while (hi2 - lo2 > 1) { var mid = (lo2 + hi2) >> 1; if (x[mid] < xv) lo2 = mid; else hi2 = mid; }
+        var idx = Math.abs(x[lo2] - xv) <= Math.abs(x[hi2] - xv) ? lo2 : hi2;
+        var px = sx(x[idx]);
+        xl.setAttribute('x1', px); xl.setAttribute('x2', px); xl.setAttribute('visibility', 'visible');
+        var rows = '<div class="th">' + fmtX(x[idx]) + '</div>';
+        vis.forEach(function (se, k) {
+          var v = se.y[idx];
+          if (v == null) { dots[k].setAttribute('visibility', 'hidden'); return; }
+          dots[k].setAttribute('cx', px); dots[k].setAttribute('cy', sy(v)); dots[k].setAttribute('visibility', 'visible');
+          rows += '<div><i class="sw" style="--c:' + se.color + '"></i>' + se.name + '<b>' + (se.fmt || fmtY)(v) + '</b></div>';
+        });
+        tip.innerHTML = rows; tip.hidden = false;
+        var scaled = px * r.width / W, tw = tip.offsetWidth, left = scaled + 14;
+        if (left + tw > el.clientWidth) left = scaled - tw - 14;
+        tip.style.left = Math.max(0, left) + 'px';
+        tip.style.top = (svg.offsetTop + 8) + 'px';
+      }
+      hit.addEventListener('pointermove', show);
+      hit.addEventListener('pointerdown', show);
+      hit.addEventListener('pointerleave', hide);
+    }
+
+    draw();
+    if (window.ResizeObserver) {
+      new ResizeObserver(function () { if (Math.floor(el.clientWidth) !== lastW) draw(); }).observe(el);
+    }
+    return { update: function (n) { o = Object.assign({}, o, n); draw(); } };
+  }
+
+  /* ---------- simulador interactivo ---------- */
+  var DEF = { Kp: 3, Ki: 0.3, Kd: 0.4, r: 60, aw: false };
+  var state = Object.assign({}, DEF);
+  var PRESETS = [0, 0.1, 0.2, 0.3, 0.4, 0.5];
+  var tempChart = makeChart($('c-temp'), { x: [0, 100], series: [{ name: 'Temperatura', color: 'var(--s1)', y: [25, 25] }], height: 250, xDomain: [0, 100], yDomain: [20, 70], title: 'Temperatura simulada en función del tiempo', fmtX: function (v) { return fx(v, 1) + ' s'; }, fmtY: function (v) { return fx(v, 2) + ' °C'; } });
+  var powChart = makeChart($('c-pow'), { x: [0, 100], series: [{ name: 'Potencia', color: 'var(--s2)', y: [0, 0] }], height: 170, xDomain: [0, 100], yDomain: [0, 100], legend: false, xLabel: 'Tiempo (s)', title: 'Potencia solicitada en función del tiempo', fmtY: function (v) { return fx(v, 1) + ' %'; } });
+
+  function renderSim() {
+    var sim = simulate(state), m = metrics(sim, state.r);
+    $('m-tmax').innerHTML = fx(m.Tmax, 2) + '<small>°C</small>';
+    $('m-mp').innerHTML = fx(m.Mp, 2) + '<small>°C</small>';
+    $('m-ef').innerHTML = fx(Math.abs(m.ef) < 0.005 ? 0 : m.ef, 2) + '<small>°C</small>';
+    $('m-ts').innerHTML = m.ts == null ? '<small style="margin:0">No alcanzado</small>' : fx(m.ts, 1) + '<small>s</small>';
+    $('m-uf').innerHTML = fx(m.uf, 2) + '<small>%</small>';
+    var top = Math.ceil(Math.max(state.r + 5, m.Tmax + 2) / 5) * 5;
+    tempChart.update({
+      x: sim.t, yDomain: [20, top],
+      series: [{ name: 'Temperatura', color: 'var(--s1)', y: sim.T }],
+      refs: [{ y: state.r, label: 'Consigna ' + state.r + ' °C', legend: 'Consigna' }],
+      bands: [{ y0: state.r - m.band, y1: state.r + m.band, color: 'var(--band)', swatch: 'var(--s1)', name: 'Banda ±' + fx(m.band, 1) + ' °C' }]
+    });
+    var uss = (state.r - MODEL.Tamb) / MODEL.G;
+    powChart.update({ x: sim.t, series: [{ name: 'Potencia', color: 'var(--s2)', y: sim.u }], refs: [{ y: uss, label: 'Régimen permanente ' + fx(uss, 1) + ' %' }] });
+    $('ss-note').textContent = 'Con integral, la potencia de régimen para ' + state.r + ' °C es (r − Tamb) / G = ' + fx(uss, 2) + ' %. Con solo proporcional, el error final sería ' + fx((state.r - MODEL.Tamb) / (1 + MODEL.G * state.Kp), 2) + ' °C.';
+    document.querySelectorAll('#presets .chip').forEach(function (b) { b.setAttribute('aria-pressed', Math.abs(+b.dataset.ki - state.Ki) < 1e-9 ? 'true' : 'false'); });
+  }
+  function syncControls() {
+    $('kp').value = state.Kp; $('ki').value = state.Ki; $('kd').value = state.Kd; $('sp').value = state.r; $('aw').checked = state.aw;
+    $('o-kp').textContent = fx(state.Kp, 1); $('o-ki').textContent = fx(state.Ki, 2); $('o-kd').textContent = fx(state.Kd, 2); $('o-sp').textContent = state.r + ' °C';
+  }
+  [['kp', 'Kp'], ['ki', 'Ki'], ['kd', 'Kd'], ['sp', 'r']].forEach(function (p) {
+    $(p[0]).addEventListener('input', function () { state[p[1]] = parseFloat(this.value); syncControls(); renderSim(); });
+  });
+  $('aw').addEventListener('change', function () { state.aw = this.checked; renderSim(); });
+  $('reset').addEventListener('click', function () { state = Object.assign({}, DEF); syncControls(); renderSim(); });
+  PRESETS.forEach(function (ki) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.dataset.ki = ki; b.textContent = fx(ki, 1); b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', function () { state.Ki = ki; syncControls(); renderSim(); });
+    $('presets').appendChild(b);
+  });
+  syncControls(); renderSim();
+
+  /* ---------- comparación de curvas ---------- */
+  var CFG = { Kp: 3, Kd: 0.4, r: 60, aw: false };
+  var cmpSeries = PRESETS.map(function (ki, i) {
+    var sim = simulate(Object.assign({ Ki: ki }, CFG));
+    return { name: 'Ki = ' + fx(ki, 1), color: 'var(--s' + (i + 1) + ')', y: sim.T, hidden: false };
+  });
+  var cmpT = simulate(Object.assign({ Ki: 0 }, CFG)).t;
+  var cmpChart = makeChart($('c-cmp'), {
+    x: cmpT, series: cmpSeries, legend: false, height: 280, xDomain: [0, 100], yDomain: [25, 65], xLabel: 'Tiempo (s)',
+    title: 'Temperatura para seis valores de Ki', fmtY: function (v) { return fx(v, 2) + ' °C'; },
+    refs: [{ y: 60, label: 'Consigna 60 °C' }],
+    bands: [{ y0: 59.3, y1: 60.7, color: 'var(--band)', swatch: 'var(--s1)', name: 'Banda ±0.7 °C' }]
+  });
+  cmpSeries.forEach(function (se, i) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.setAttribute('aria-pressed', 'true');
+    b.innerHTML = '<i style="--c:' + se.color + '"></i>' + se.name;
+    b.addEventListener('click', function () {
+      se.hidden = !se.hidden; b.setAttribute('aria-pressed', se.hidden ? 'false' : 'true');
+      cmpChart.update({ series: cmpSeries });
+    });
+    $('cmp-chips').appendChild(b);
+  });
+
+  /* ---------- barrido fino de Ki ---------- */
+  var kis = [], mps = [], tss = [], rows = '';
+  for (var i = 20; i <= 50; i++) {
+    var ki = i / 100, mm = metrics(simulate(Object.assign({ Ki: ki }, CFG)), 60);
+    kis.push(ki); mps.push(mm.Mp); tss.push(mm.ts);
+    rows += '<tr><td class="n">' + fx(ki, 2) + '</td><td class="n">' + fx(mm.Mp, 2) + '</td><td class="n">' + (mm.ts == null ? 'No alcanzado' : fx(mm.ts, 1)) + '</td></tr>';
+  }
+  $('sweep-tbl').innerHTML = rows;
+  var xt = [0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5];
+  var fKi = function (v) { return 'Ki = ' + fx(v, 2); };
+  makeChart($('c-mp'), { x: kis, series: [{ name: 'Sobreimpulso', color: 'var(--s1)', y: mps, marker: true }], legend: false, height: 230, xDomain: [0.2, 0.5], xTicks: xt, xDec: 2, yDomain: [0, 3.5], xLabel: 'Ki', title: 'Sobreimpulso en función de Ki', fmtX: fKi, fmtY: function (v) { return fx(v, 2) + ' °C'; }, refs: [{ y: 0.7, label: 'Límite de la banda: 0.7 °C' }] });
+  makeChart($('c-ts'), { x: kis, series: [{ name: 'Establecimiento', color: 'var(--s2)', y: tss, marker: true }], legend: false, height: 230, xDomain: [0.2, 0.5], xTicks: xt, xDec: 2, yDomain: [0, 50], xLabel: 'Ki', title: 'Tiempo de establecimiento en función de Ki', fmtX: fKi, fmtY: function (v) { return fx(v, 1) + ' s'; } });
+
+  var bestI = 0, firstOut = -1, bestZeroI = -1;
+  tss.forEach(function (t, j) {
+    if (t != null && t < tss[bestI]) bestI = j;
+    if (firstOut < 0 && mps[j] > 0.7 + 1e-9) firstOut = j;
+    if (mps[j] < 0.005 && t != null && (bestZeroI < 0 || t < tss[bestZeroI])) bestZeroI = j;
+  });
+  $('sweep-note').textContent =
+    'El menor tiempo de establecimiento es ' + fx(tss[bestI], 1) + ' s con Ki = ' + fx(kis[bestI], 2) + ', pero su sobreimpulso (' + fx(mps[bestI], 2) + ' °C) está casi en el borde de la banda de ±0.7 °C. Con Ki = ' + fx(kis[firstOut], 2) + ' el sobreimpulso es ' + fx(mps[firstOut], 2) + ' °C, sale de la banda y el tiempo salta a ' + fx(tss[firstOut], 1) + ' s. Si se pide sobreimpulso prácticamente nulo, el mejor valor es Ki = ' + fx(kis[bestZeroI], 2) + ', con ' + fx(tss[bestZeroI], 1) + ' s.';
+
+  /* ---------- anti-windup ---------- */
+  var awRows = '';
+  [0.3, 0.5, 0.8].forEach(function (k) {
+    var a = metrics(simulate(Object.assign({}, CFG, { Ki: k, aw: false })), 60), b = metrics(simulate(Object.assign({}, CFG, { Ki: k, aw: true })), 60);
+    awRows += '<tr><td class="n">' + fx(k, 1) + '</td><td class="n">' + fx(a.Mp, 2) + '</td><td class="n">' + fx(b.Mp, 2) + '</td><td class="n">' + fx(a.ts, 1) + '</td><td class="n">' + fx(b.ts, 1) + '</td></tr>';
+  });
+  $('aw-tbl').innerHTML = awRows;
+})();
+</script>
+
+</body>
+</html>
+
+</body></html>
