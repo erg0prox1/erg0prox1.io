@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Respuesta de un sistema térmico con control PID · Martin</title>
+  <meta name="description" content="Simulación interactiva de un sistema térmico de primer orden controlado con PID: mueve las ganancias y observa sobrepico y tiempo de asentamiento.">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Respuesta de un sistema térmico con control PID">
+  <meta property="og:description" content="Simulación interactiva de un sistema térmico de primer orden controlado con PID.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23b5532f'/%3E%3Cpath d='M5 22 Q 11 4 16 16 T 27 10' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <div class="wrap">
+
+    <header class="site-header">
+      <a class="site-title" href="../">Martin</a>
+      <nav class="site-nav">
+        <a href="../archive.html">Archivo</a>
+      </nav>
+    </header>
+
+    <main>
+      <article class="post">
+
+        <h1>Respuesta de un sistema térmico con control PID</h1>
+        <div class="post-meta">
+          <time datetime="2026-10-11">11 de octubre de 2026</time>
+          <span class="dot">·</span>
+          <span>Simulación</span>
+        </div>
+
+        <p>
+          Esta entrada es un ejemplo de cómo se ve una simulación publicada en el sitio. Corre completa en tu navegador,
+          sin servidor: la lógica está en JavaScript dentro de la misma página. Reemplázala por tu propio contenido.
+        </p>
+
+        <h2>El modelo</h2>
+        <p>
+          Una planta térmica de primer orden: la temperatura <code>T</code> sube con la potencia aplicada <code>u</code>
+          (0 a 100 %) y pierde calor hacia el ambiente.
+        </p>
+
+        <pre><code>τ · dT/dt = −(T − T_amb) + K · u
+u = Kp·e + Ki·∫e dt + Kd·de/dt      con e = T_sp − T
+τ = 10 s,  K = 1 °C/%,  T_amb = 25 °C,  u limitado a [0, 100]</code></pre>
+
+        <p>
+          La integral se congela cuando la salida satura (anti-windup), para que no se acumule error mientras el
+          actuador no puede dar más.
+        </p>
+
+        <h2>Simulación</h2>
+
+        <div class="sim" id="sim-box">
+          <canvas id="sim" aria-label="Temperatura contra tiempo y setpoint"></canvas>
+          <div class="controls">
+            <label>Setpoint (°C) <output id="o-sp">70</output>
+              <input id="sp" type="range" min="30" max="95" step="1" value="70"></label>
+            <label>Kp <output id="o-kp">4</output>
+              <input id="kp" type="range" min="0" max="20" step="0.1" value="4"></label>
+            <label>Ki <output id="o-ki">0.5</output>
+              <input id="ki" type="range" min="0" max="5" step="0.05" value="0.5"></label>
+            <label>Kd <output id="o-kd">0</output>
+              <input id="kd" type="range" min="0" max="20" step="0.1" value="0"></label>
+          </div>
+          <div class="readout" id="readout"></div>
+        </div>
+
+        <h2>Qué observar</h2>
+        <p>
+          Con Ki en cero, el sistema se estabiliza con un error permanente. Al subir Ki desaparece el error pero aparece
+          sobrepico. Subir Kp acelera la respuesta hasta que la saturación del actuador pone el límite. Úsalo como punto
+          de partida y cambia la planta por la que quieras modelar.
+        </p>
+
+      </article>
+
+      <a class="back" href="../">← Volver al inicio</a>
+    </main>
+
+    <footer class="site-footer">
+      <span>© <span id="year">2026</span> Martin</span>
+      <a href="../archive.html">Archivo</a>
+    </footer>
+
+  </div>
+
+  <script>
+  (function () {
+    var $ = function (id) { return document.getElementById(id); };
+    var canvas = $("sim"), ctx = canvas.getContext("2d");
+
+    var TAU = 10, K = 1, T_AMB = 25, U_MAX = 100, DT = 0.05, T_END = 60;
+
+    function css(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    function simulate(sp, kp, ki, kd) {
+      var n = Math.round(T_END / DT), T = T_AMB, I = 0, prev = sp - T;
+      var temps = [], us = [];
+      for (var i = 0; i < n; i++) {
+        var e = sp - T;
+        var d = (e - prev) / DT;
+        prev = e;
+        var u = kp * e + ki * I + kd * d;
+        var uc = Math.min(U_MAX, Math.max(0, u));
+        if (u === uc) I += e * DT;               // anti-windup
+        T += DT * (-(T - T_AMB) + K * uc) / TAU; // Euler explícito
+        temps.push(T); us.push(uc);
+      }
+      return { temps: temps, us: us };
+    }
+
+    function metrics(temps, sp) {
+      var peak = Math.max.apply(null, temps);
+      var span = sp - T_AMB;
+      var over = span > 0 ? Math.max(0, (peak - sp) / span * 100) : 0;
+      var band = 0.02 * span, settle = null;
+      for (var i = temps.length - 1; i >= 0; i--) {
+        if (Math.abs(temps[i] - sp) > band) { settle = (i + 1) * DT; break; }
+        if (i === 0) settle = 0;
+      }
+      var final = temps[temps.length - 1];
+      return { over: over, settle: settle, err: sp - final };
+    }
+
+    function draw(sp, temps) {
+      var dpr = window.devicePixelRatio || 1;
+      var w = canvas.clientWidth, h = canvas.clientHeight;
+      canvas.width = w * dpr; canvas.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+
+      var padL = 38, padR = 8, padT = 8, padB = 22;
+      var pw = w - padL - padR, ph = h - padT - padB;
+      var ymin = 20, ymax = Math.max(100, Math.max.apply(null, temps) + 5);
+      var X = function (t) { return padL + (t / T_END) * pw; };
+      var Y = function (v) { return padT + ph - ((v - ymin) / (ymax - ymin)) * ph; };
+
+      ctx.font = "11px -apple-system, Helvetica, Arial, sans-serif";
+      ctx.fillStyle = css("--muted"); ctx.strokeStyle = css("--rule"); ctx.lineWidth = 1;
+
+      // rejilla y ejes
+      for (var v = 20; v <= ymax; v += 20) {
+        ctx.beginPath(); ctx.moveTo(padL, Y(v)); ctx.lineTo(w - padR, Y(v)); ctx.stroke();
+        ctx.fillText(v + "°", 6, Y(v) + 4);
+      }
+      for (var t = 0; t <= T_END; t += 10) {
+        ctx.fillText(t + " s", X(t) - 10, h - 6);
+      }
+
+      // setpoint
+      ctx.setLineDash([5, 4]); ctx.strokeStyle = css("--muted"); ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(padL, Y(sp)); ctx.lineTo(w - padR, Y(sp)); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // temperatura
+      ctx.strokeStyle = css("--accent"); ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (var i = 0; i < temps.length; i++) {
+        var x = X(i * DT), y = Y(temps[i]);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    function update() {
+      var sp = +$("sp").value, kp = +$("kp").value, ki = +$("ki").value, kd = +$("kd").value;
+      $("o-sp").textContent = sp; $("o-kp").textContent = kp;
+      $("o-ki").textContent = ki; $("o-kd").textContent = kd;
+
+      var r = simulate(sp, kp, ki, kd);
+      var m = metrics(r.temps, sp);
+      draw(sp, r.temps);
+
+      $("readout").innerHTML =
+        "Sobrepico: <strong>" + m.over.toFixed(1) + " %</strong> · " +
+        "Asentamiento (±2 %): <strong>" + (m.settle === null ? "no se asienta en " + T_END + " s" : m.settle.toFixed(1) + " s") + "</strong> · " +
+        "Error final: <strong>" + m.err.toFixed(2) + " °C</strong>";
+    }
+
+    ["sp", "kp", "ki", "kd"].forEach(function (id) { $(id).addEventListener("input", update); });
+    window.addEventListener("resize", update);
+    if (window.matchMedia) {
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", update);
+    }
+    update();
+
+    $("year").textContent = new Date().getFullYear();
+  })();
+  </script>
+</body>
+</html>

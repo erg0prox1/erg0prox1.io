@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- 1) Cambia título y descripción (la descripción sale al compartir el enlace) -->
+  <title>TÍTULO DE LA ENTRADA · Martin</title>
+  <meta name="description" content="Resumen de una o dos frases.">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="TÍTULO DE LA ENTRADA">
+  <meta property="og:description" content="Resumen de una o dos frases.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23b5532f'/%3E%3Cpath d='M5 22 Q 11 4 16 16 T 27 10' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../assets/style.css">
+
+  <!-- OPCIONAL: ecuaciones con KaTeX. Descomenta las 3 líneas y escribe $$ ... $$ o \( ... \) en el texto.
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body)"></script>
+  -->
+</head>
+<body>
+  <div class="wrap">
+
+    <header class="site-header">
+      <a class="site-title" href="../">Martin</a>
+      <nav class="site-nav">
+        <a href="../archive.html">Archivo</a>
+      </nav>
+    </header>
+
+    <main>
+      <article class="post">
+
+        <!-- 2) Título y metadatos -->
+        <h1>Título de la entrada</h1>
+        <div class="post-meta">
+          <time datetime="2026-10-11">11 de octubre de 2026</time>
+          <span class="dot">·</span>
+          <span>Simulación</span>
+          <span class="dot">·</span>
+          <span>5 min de lectura</span>
+        </div>
+
+        <!-- 3) Contenido -->
+        <p>Párrafo de apertura: qué sistema simulas y qué pregunta responde esta entrada.</p>
+
+        <h2>El modelo</h2>
+        <p>Ecuaciones, supuestos y parámetros. Di qué dejaste fuera a propósito.</p>
+
+        <pre><code>dT/dt = (-(T - T_amb) + K·u) / τ</code></pre>
+
+        <h2>La simulación</h2>
+
+        <!-- Opción A: simulación en JS puro, dentro de la misma página (ver ejemplo-simulacion.html) -->
+
+        <!-- Opción B: simulación hospedada aparte (otra página de GitHub Pages, Hugging Face Space, etc.) -->
+        <!-- <iframe class="embed" src="https://URL-DE-TU-SIMULACION" loading="lazy" title="Simulación"></iframe> -->
+
+        <!-- Opción C: imagen o GIF exportado de tu simulación -->
+        <figure>
+          <img src="" alt="Descripción de la gráfica" loading="lazy">
+          <figcaption>Figura 1. Qué muestra la gráfica y bajo qué condiciones se generó.</figcaption>
+        </figure>
+
+        <h2>Qué aprendí</h2>
+        <p>Resultados, límites del modelo y qué probarías después.</p>
+
+        <h2>Código</h2>
+        <p><a href="https://github.com/TU-USUARIO/TU-REPO">Repositorio en GitHub</a></p>
+
+      </article>
+
+      <a class="back" href="../">← Volver al inicio</a>
+    </main>
+
+    <footer class="site-footer">
+      <span>© <span id="year">2026</span> Martin</span>
+      <a href="../archive.html">Archivo</a>
+    </footer>
+
+  </div>
+  <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+</body>
+</html>
