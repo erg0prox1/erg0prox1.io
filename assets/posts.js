@@ -9,10 +9,10 @@
 // ==========================================================
 window.POSTS = [
   {
-    title: "Respuesta de un sistema térmico con control PID",
+    title: "PlantTwin: efecto de la ganancia integral en un control PID",
     date: "2026-10-11",
     type: "simulacion",
-    url: "posts/ejemplo-simulacion.html"
+    url: "posts/PlantTwin.html"
   }
   // , { title: "Otra simulación", date: "2026-10-18", type: "simulacion", url: "posts/otra.html" }
   // , { title: "Una nota corta", date: "2026-10-20", type: "nota", url: "posts/nota.html" }
