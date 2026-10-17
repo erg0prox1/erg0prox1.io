@@ -9,7 +9,7 @@
 // ==========================================================
 window.POSTS = [
   {
-    title: "PlantTwin: efecto de la ganancia integral en un control PID",
+    title: "PlantTwin: effect of integral gain in a PID control",
     date: "2026-10-11",
     type: "simulacion",
     url: "posts/PlantTwin.html"
