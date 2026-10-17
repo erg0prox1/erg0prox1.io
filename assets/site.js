@@ -29,7 +29,7 @@
           return '<li><a href="' + esc(p.url) + '">' + esc(p.title) + "</a>" +
                  '<time datetime="' + esc(p.date) + '">' + fecha(p.date) + "</time></li>";
         }).join("")
-      : '<li class="empty">Pronto.</li>';
+      : '<li class="empty"></li>';
   });
 
   var y = document.getElementById("year");
